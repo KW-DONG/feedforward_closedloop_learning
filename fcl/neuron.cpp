@@ -167,7 +167,7 @@ void FCLNeuron::doLearning() {
 		assert((weightChange+i) == weightschp);
 		if (*maskp) {
 			*weightschp = momentum * (*weightschp) +
-				(*inputsp) * error * learningRate * learningRateFactor -
+				(*inputsp) * error * errorDerivative * learningRate * learningRateFactor -
 				(*weightsp) * decay * learningRate * fabs(error);
 			*weightsp = *weightsp + *weightschp;
 #ifdef DEBUG
