@@ -140,7 +140,7 @@ void FeedforwardClosedloopLearning::doStep(const std::vector<double> &input, con
 			err = err * learningRateDiscountFactor;
 			err = err * emitterLayer->getNneurons();
 			err = err * receiverLayer->getNeuron(i)->dActivation();
-			receiverLayer->getNeuron(i)->setErrorDerivative(receiverLayer->getNeuron(i)->getError() - err);
+			receiverLayer->getNeuron(i)->setErrorDerivative(err - receiverLayer->getNeuron(i)->getError());
 			receiverLayer->getNeuron(i)->setError(err);
 		}
 	}
