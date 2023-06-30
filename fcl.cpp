@@ -117,6 +117,7 @@ void FeedforwardClosedloopLearning::doStep(const std::vector<double> &input, con
 	}
 	// the error is injected into the 1st layer!
 	for(int i=0;i<(layers[0]->getNneurons());i++) {
+		layers[0]->getNeuron(i)->setErrorDerivative(error[i] - layers[0]->getNeuron(i)->getError() );
 		layers[0]->getNeuron(i)->setError(error[i]);
 	}
 	for (unsigned k=1; k<n_neurons_per_layer.size(); k++) {
@@ -139,6 +140,7 @@ void FeedforwardClosedloopLearning::doStep(const std::vector<double> &input, con
 			err = err * learningRateDiscountFactor;
 			err = err * emitterLayer->getNneurons();
 			err = err * receiverLayer->getNeuron(i)->dActivation();
+			receiverLayer->getNeuron(i)->setErrorDerivative(receiverLayer->getNeuron(i)->getError() - err);
 			receiverLayer->getNeuron(i)->setError(err);
 		}
 	}
