@@ -105,6 +105,9 @@ void FCLNeuron::calcOutput() {
 			output = 0;
 		}
 		break;
+	case SIGMOID:
+		output = 1.0/(1.0+exp(-sum));
+		break;
 	default:
 		output = sum;	
 	}
@@ -139,7 +142,11 @@ double FCLNeuron::dActivation() {
 			return 0;
 		}
 		break;		
-		
+	case SIGMOID:
+		d = output * (1.0 - output);
+		return d;
+		break;
+
 	default:
 		return 1;
 	}
@@ -395,6 +402,10 @@ void FCLNeuron::setError(double _error) {
 	assert(!isnan(_error));
 }
 
+void FCLNeuron::setErrorDerivative(double _errorDerivative) {
+	errorDerivative = _errorDerivative;
+	assert(!isnan(_errorDerivative));
+}
 
 void FCLNeuron::setMask( int x, int y, unsigned char c) {
 	if (x<0) return;

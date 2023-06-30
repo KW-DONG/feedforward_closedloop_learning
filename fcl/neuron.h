@@ -82,8 +82,9 @@ public:
          * TANH: tangens hyperbolicus, 
          * RELU: linear rectifier, 
          * REMAXLU: as RELU but limits to one.
+		 * SIGMOID: logistic sigmoid
          **/
-	enum ActivationFunction { LINEAR = 0, TANH = 1, RELU = 2, REMAXLU = 3, TANHLIMIT = 4};
+	enum ActivationFunction { LINEAR = 0, TANH = 1, RELU = 2, REMAXLU = 3, TANHLIMIT = 4, SIGMOID = 5};
 
 	/** Sets the activation function
          * \param _activationFunction Sets the activiation function according to ActivationFunction.
@@ -150,6 +151,16 @@ public:
          * \return The error value stored in the neuron
          **/
 	inline double getError() { return error; };
+
+	/** Sets the derivative of the error in the neuron
+		 * \param _errorDerivative Sets the derivative of the error of the neuron.
+		 **/
+	void setErrorDerivative(double _errorDerivative);
+
+	/** Gets the derivative of the error as set by setError
+		 * \return The derivative of the error value stored in the neuron
+		 **/
+	inline double getErrorDerivative() { return errorDerivative; };
 
 	/** Sets one input 
          * \param _index Index of the input.
@@ -327,6 +338,7 @@ private:
 	double output = 0;
 	double sum = 0;
 	double error = 0;
+	double errorDerivative = 0;
 	double learningRate = 0;
 	double learningRateFactor = 1;
 	double momentum = 0;
