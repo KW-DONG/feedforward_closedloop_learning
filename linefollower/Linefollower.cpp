@@ -27,6 +27,8 @@ protected:
 	FILE* llog = NULL;
 
 	FILE* fcoord = NULL;
+
+	FILE** fweights = NULL;
 	
 	int learningOff = 1;
 
@@ -37,10 +39,19 @@ protected:
 	int successCtr = 0;
 
 	int trackCompletedCtr = 5000;
+
+	double absErrMax = 0.2;
 		
 public:
 	LineFollower(World *world, QWidget *parent = 0) :
 		ViewerWidget(world, parent) {
+
+		fweights = new FILE * [nNeuronsInLayers.size()];
+		for (int i = 0; i < nNeuronsInLayers.size(); i++) {
+			char tmp[256];
+			sprintf(tmp, "wlayer%d.dat", i);
+			fweights[i] = fopen(tmp, "wt");
+		}
 
 		flog = fopen("flog.tsv","wt");
 		fcoord = fopen("coord.tsv","wt");
@@ -75,6 +86,9 @@ public:
 	~LineFollower() {
 		fclose(flog);
 		fclose(fcoord);
+		for (int i = 0; i < nNeuronsInLayers.size(); i++) {
+			fclose(fweights[i]);
+		}
 		delete fcl;
 	}
 
@@ -153,8 +167,23 @@ public:
 		fprintf(stderr,"%e ",vL);
 		fprintf(stderr,"%e ",vR);
 		fprintf(stderr,"\n");
-		racer->leftSpeed = speed+erroramp+vL;
-		racer->rightSpeed = speed-erroramp+vR;
+
+		double fclgain = 1.0;
+		{
+			double absError = fabs(error);
+			if (absError > absErrMax)
+			{
+				absErrMax = absError;
+				fprintf(stderr, "%e\n", absError);
+			}
+			if (absError >= 0.2)
+				fclgain = 0.0;
+			else
+				fclgain = -1.0 / 0.2 * absError + 1.0;
+		}
+
+		racer->leftSpeed = speed+erroramp+vL*fclgain;
+		racer->rightSpeed = speed-erroramp+vR*fclgain;
 
 		// documenting
 		// if the learning is off we set the error to zero which
@@ -182,6 +211,20 @@ public:
 		}
 		fprintf(flog,"\n");
 
+		if ((step % 10) == 0) {
+			for (int i = 0; i < fcl->getNumLayers(); i++) {
+				FCLLayer* layer = fcl->getLayer(i);
+				for (int j = 0; j < fcl->getLayer(i)->getNneurons(); j++) {
+					FCLNeuron* neuron = layer->getNeuron(j);
+					double nInputs = neuron->getNinputs();
+					for (int k = 0; k < nInputs; k++) {
+						fprintf(fweights[i], ",%e", neuron->getWeight(k));
+					}
+					fprintf(fweights[i], "\n");
+				}
+			}
+		}
+		/*
 		if ((step%100)==0) {
 			for(int i=0;i<fcl->getNumLayers();i++) {
 				char tmp[256];
@@ -189,7 +232,7 @@ public:
 				fcl->getLayer(i)->saveWeightMatrix(tmp);
 			}
 		}
-
+		*/
 		step++;
 	}
 
@@ -240,6 +283,7 @@ void statsRun(int argc,
 
 int main(int argc, char *argv[]) {
 	int n = 0;
+	
 	if (argc>1) {
 		n = atoi(argv[1]);
 	} else {
@@ -255,5 +299,6 @@ int main(int argc, char *argv[]) {
 		statsRun(argc,argv);
 		break;
 	}
+	
 	return 0;
 }
