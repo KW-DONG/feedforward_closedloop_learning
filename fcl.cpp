@@ -117,9 +117,10 @@ void FeedforwardClosedloopLearning::doStep(const std::vector<double> &input, con
 	}
 	// the error is injected into the 1st layer!
 	for(int i=0;i<(layers[0]->getNneurons());i++) {
-		layers[0]->getNeuron(i)->setErrorDerivative(error[i] - layers[0]->getNeuron(i)->getError() );
 		layers[0]->getNeuron(i)->setError(error[i]);
 	}
+
+/*
 	for (unsigned k=1; k<n_neurons_per_layer.size(); k++) {
 		FCLLayer* emitterLayer = layers[k-1];
 		FCLLayer* receiverLayer = layers[k];
@@ -140,10 +141,46 @@ void FeedforwardClosedloopLearning::doStep(const std::vector<double> &input, con
 			err = err * learningRateDiscountFactor;
 			err = err * emitterLayer->getNneurons();
 			err = err * receiverLayer->getNeuron(i)->dActivation();
-			receiverLayer->getNeuron(i)->setErrorDerivative(err - receiverLayer->getNeuron(i)->getError());
 			receiverLayer->getNeuron(i)->setError(err);
 		}
 	}
+*/
+
+//writen by CHING-HSUAN LIN
+	for (unsigned k=1; k<n_neurons_per_layer.size(); k++) {
+		FCLLayer* emitterLayer = layers[k-1];
+		FCLLayer* receiverLayer = layers[k];
+		std::vector<double> err(receiverLayer->getNneurons(), 0.0);
+		double errSum = 0;
+		//double w = 0;
+		// Calculate the errors for the hidden layer
+		for(int i=0;i<receiverLayer->getNneurons();i++) {
+			//double e = 0;
+			for(int j=0;j<emitterLayer->getNneurons();j++) {
+				
+				err[i] = err[i] + receiverLayer->getNeuron(i)->getWeight(j) *
+						emitterLayer->getNeuron(j)->getError();
+			}
+			errSum = errSum + err[i];
+		}
+
+		double sum = 0;
+		double errMean = errSum / receiverLayer->getNneurons();
+		for(int i=0;i<receiverLayer->getNneurons();i++){
+			sum += pow(err[i] - errMean, 2);
+		}
+		double errVar = sum / receiverLayer->getNneurons();
+		for(int i=0;i<receiverLayer->getNneurons();i++){
+			err[i] = (err[i] - errMean) / pow(errVar + 0.00001, 0.5);
+			err[i] = err[i] * learningRateDiscountFactor;
+			err[i] = err[i] / emitterLayer->getNneurons();
+			err[i] = err[i] * receiverLayer->getNeuron(i)->dActivation();
+			receiverLayer->getNeuron(i)->setError(err[i]);
+		}	
+	}
+
+
+
 	doLearning();
 	setStep();
 	step++;
