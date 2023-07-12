@@ -29,6 +29,8 @@ protected:
 	FILE* fcoord = NULL;
 
 	FILE** fweights = NULL;
+
+	FILE* foutput = NULL;
 	
 	int learningOff = 1;
 
@@ -43,6 +45,9 @@ protected:
 	double absErrMax = 0.2;
 		
 public:
+	/// @brief 
+	/// @param world 
+	/// @param parent 
 	LineFollower(World *world, QWidget *parent = 0) :
 		ViewerWidget(world, parent) {
 
@@ -55,6 +60,7 @@ public:
 
 		flog = fopen("flog.tsv","wt");
 		fcoord = fopen("coord.tsv","wt");
+		foutput = fopen("outputs.tsv","wt");
 
 		// setting up the robot
 		racer = new Racer(nInputs);
@@ -79,13 +85,14 @@ public:
 		fcl->setLearningRate(learningRate);
 		fcl->setLearningRateDiscountFactor(1);
 		fcl->setBias(1);
-		fcl->setActivationFunction(FCLNeuron::TANH);
+		fcl->setActivationFunction(FCLNeuron::LINEAR);
 		fcl->setMomentum(0.9);		
 	}
 
 	~LineFollower() {
 		fclose(flog);
 		fclose(fcoord);
+		fclose(foutput);
 		for (int i = 0; i < nNeuronsInLayers.size(); i++) {
 			fclose(fweights[i]);
 		}
@@ -111,6 +118,7 @@ public:
 		double leftGround2 = racer->groundSensorLeft2.getValue();
 		double rightGround2 = racer->groundSensorRight2.getValue();
 
+		fprintf(stderr, "%d\t", step);
 		fprintf(stderr,"%e\t",racer->pos.x);
 		fprintf(fcoord,"%e\t%e\n",racer->pos.x,racer->pos.y);
 		// check if we've bumped into a wall
@@ -132,6 +140,7 @@ public:
 		if (trackCompletedCtr < 1) {
 			// been off the track for a long time!
 			step = MAX_STEPS;
+			fprintf(stderr, "Fail\n");
 			qApp->quit();
 		}
 		fprintf(stderr,"%d ",learningOff);
@@ -169,6 +178,7 @@ public:
 		fprintf(stderr,"\n");
 
 		double fclgain = 1.0;
+		/*
 		{
 			double absError = fabs(error);
 			if (absError > absErrMax)
@@ -181,6 +191,7 @@ public:
 			else
 				fclgain = -1.0 / 0.2 * absError + 1.0;
 		}
+		*/
 
 		racer->leftSpeed = speed+erroramp+vL*fclgain;
 		racer->rightSpeed = speed-erroramp+vR*fclgain;
@@ -196,10 +207,16 @@ public:
 		} else {
 			successCtr++;
 		}
+
+		/*
 		if (successCtr>STEPS_BELOW_ERR_THRESHOLD) {
+			fprintf(stderr, "Success\n");
 			qApp->quit();
 		}
+		*/
+
 		if (step>MAX_STEPS) {
+			fprintf(stderr, "Max step\n");
 			qApp->quit();
 		}
 		
@@ -209,21 +226,24 @@ public:
 		for(int i=0;i<fcl->getNumLayers();i++) {
 			fprintf(flog,"\t%e",fcl->getLayer(i)->getWeightDistanceFromInitialWeights());
 		}
+
 		fprintf(flog,"\n");
 
-		if ((step % 10) == 0) {
-			for (int i = 0; i < fcl->getNumLayers(); i++) {
+		if ((step%10)==0) {			
+			for (int i = 0; i<fcl->getNumLayers();i++) {
 				FCLLayer* layer = fcl->getLayer(i);
 				for (int j = 0; j < fcl->getLayer(i)->getNneurons(); j++) {
 					FCLNeuron* neuron = layer->getNeuron(j);
 					double nInputs = neuron->getNinputs();
+					fprintf(fweights[i],"%d",j);
 					for (int k = 0; k < nInputs; k++) {
-						fprintf(fweights[i], ",%e", neuron->getWeight(k));
+						fprintf(fweights[i],",%e",neuron->getWeight(k));
 					}
-					fprintf(fweights[i], "\n");
+					fprintf(fweights[i],"\n");
 				}
 			}
 		}
+
 		/*
 		if ((step%100)==0) {
 			for(int i=0;i<fcl->getNumLayers();i++) {
