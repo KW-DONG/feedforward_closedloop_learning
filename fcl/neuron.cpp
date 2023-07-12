@@ -108,6 +108,13 @@ void FCLNeuron::calcOutput() {
 	case SIGMOID:
 		output = 1.0/(1.0+exp(-sum));
 		break;
+	case ELU:
+		if (sum >= 0){
+			output = sum;
+		} else {
+			output = std::exp(sum) - 1;
+		}
+
 	default:
 		output = sum;	
 	}
@@ -146,6 +153,12 @@ double FCLNeuron::dActivation() {
 		d = output * (1.0 - output);
 		return d;
 		break;
+	case ELU:
+		if (output >= 0) {
+			return output;
+		} else {
+			return (std::exp(output));
+		}
 
 	default:
 		return 1;
@@ -167,8 +180,8 @@ void FCLNeuron::doLearning() {
 		assert((weightChange+i) == weightschp);
 		if (*maskp) {
 			*weightschp = momentum * (*weightschp) +
-				(*inputsp) * error * errorDerivative * learningRate * learningRateFactor -
-				(*weightsp) * decay * learningRate * fabs(error);
+				(*inputsp) * errorDerivative * learningRate * learningRateFactor -
+				(*weightsp) * decay * learningRate * fabs(errorDerivative);
 			*weightsp = *weightsp + *weightschp;
 #ifdef DEBUG
 			if (isnan(sum) || isnan(weights[i]) || isnan(inputs[i]) || (fabs(sum)>SUM_ERR_THRES)) {
@@ -398,14 +411,13 @@ double FCLNeuron::getWeightDistanceFromInitialWeights() {
 
 
 void FCLNeuron::setError(double _error) {
+	lastError = error;
 	error = _error;
+	errorDerivative = error - lastError;
 	assert(!isnan(_error));
 }
 
-void FCLNeuron::setErrorDerivative(double _errorDerivative) {
-	errorDerivative = _errorDerivative;
-	assert(!isnan(_errorDerivative));
-}
+
 
 void FCLNeuron::setMask( int x, int y, unsigned char c) {
 	if (x<0) return;
