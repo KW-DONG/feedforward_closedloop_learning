@@ -413,7 +413,7 @@ double FCLNeuron::getWeightDistanceFromInitialWeights() {
 void FCLNeuron::setError(double _error) {
 	lastError = error;
 	error = _error;
-	errorDerivative = error - lastError;
+	errorDerivative = lastError - error;
 	assert(!isnan(_error));
 }
 
