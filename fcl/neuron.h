@@ -84,7 +84,7 @@ public:
          * REMAXLU: as RELU but limits to one.
 		 * SIGMOID: logistic sigmoid
          **/
-	enum ActivationFunction { LINEAR = 0, TANH = 1, RELU = 2, REMAXLU = 3, TANHLIMIT = 4, SIGMOID = 5, ELU = 6};
+	enum ActivationFunction { LINEAR = 0, TANH = 1, RELU = 2, REMAXLU = 3, TANHLIMIT = 4, SIGMOID = 5, ELU = 6, SOFTSIGN = 7, SINUSOID = 8, CUS2ORD = 9};
 
 	/** Sets the activation function
          * \param _activationFunction Sets the activiation function according to ActivationFunction.

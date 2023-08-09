@@ -114,7 +114,20 @@ void FCLNeuron::calcOutput() {
 		} else {
 			output = std::exp(sum) - 1;
 		}
-
+	case SOFTSIGN:
+		output = sum / (1 + fabs(sum));
+		break;
+	case SINUSOID:
+		output = sin(sum);
+		break;
+	case CUS2ORD:
+		if (sum > 0) {
+			output = sum* sum;
+		}
+		else {
+			output = -sum * sum;
+		}
+		break;
 	default:
 		output = sum;	
 	}
@@ -150,16 +163,27 @@ double FCLNeuron::dActivation() {
 		}
 		break;		
 	case SIGMOID:
-		d = output * (1.0 - output);
+		d = sum * (1.0 - sum);
 		return d;
 		break;
 	case ELU:
-		if (output >= 0) {
-			return output;
+		if (sum >= 0) {
+			return sum;
 		} else {
-			return (std::exp(output));
+			return (std::exp(sum));
 		}
-
+	case SOFTSIGN:
+		double num = 1 + fabs(sum);
+		return 1.0 / (num * num);
+	case SINUSOID:
+		return cos(sum);
+	case CUS2ORD:
+		if (sum > 0) {
+			return 2.0 * sum;
+		}
+		else {
+			return -2.0 * sum;
+		}
 	default:
 		return 1;
 	}
